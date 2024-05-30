@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chenye.iot.canary.dao.DeviceAbilityMapper">
+    <resultMap id="DeviceAbilityMap" type="com.chenye.iot.canary.dao.DeviceAbility">
+    </resultMap>
+
+    <sql id="listByJoinedTables">
+        SELECT da.*
+        FROM device_ability da
+                 JOIN device d ON da.device_code = d.device_code
+                 JOIN device_model_ability dma ON dma.device_model_code = d.device_model_code AND dma.ability_code =
+                                                                                                  da.ability_code
+    </sql>
+
+    <select id="listByDriverInstanceIdAndAbilityType" resultMap="DeviceAbilityMap">
+        <include refid="listByJoinedTables"/>
+        WHERE dma.ability_type = #{abilityType}
+        <if test="driverInstanceId != null">
+            and da.driver_instance_id = #{driverInstanceId}
+        </if>
+    </select>
+</mapper>

@@ -1,0 +1,449 @@
+{
+  "properties": [
+    {
+      "identifier": "color",
+      "name": "颜色",
+      "accessMode": "READ_WRITE",
+      "dataType": {
+        "type": "ENUM",
+        "specs": {
+          "1": "红",
+          "2": "黄",
+          "3": "绿",
+          "4": "蓝"
+        }
+      },
+      "desc": null
+    },
+    {
+      "identifier": "brightness",
+      "name": "亮度",
+      "accessMode": "READ_WRITE",
+      "dataType": {
+        "type": "INT",
+        "specs": {
+          "min": 1,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "unitName": "百分比"
+        }
+      },
+      "desc": null
+    },
+    {
+      "identifier": "switch",
+      "name": "开关",
+      "accessMode": "READ_WRITE",
+      "dataType": {
+        "type": "BOOL",
+        "specs": {
+          "false": "关",
+          "true": "开"
+        }
+      },
+      "desc": null
+    },
+    {
+      "identifier": "personalName",
+      "name": "用户设置的个性化名称",
+      "accessMode": "READ_WRITE",
+      "dataType": {
+        "type": "TEXT",
+        "specs": {
+          "length": 30
+        }
+      },
+      "desc": null
+    },
+    {
+      "identifier": "switchTime",
+      "name": "最后一次开关时间",
+      "accessMode": "READ_ONLY",
+      "dataType": {
+        "type": "DATE",
+        "specs": {}
+      },
+      "desc": null
+    },
+    {
+      "identifier": "testDay",
+      "name": "测试日期格式",
+      "accessMode": "READ_WRITE",
+      "dataType": {
+        "type": "DAY",
+        "specs": {}
+      }
+    },
+    {
+      "identifier": "gps",
+      "name": "地理位置",
+      "accessMode": "READ_WRITE",
+      "dataType": {
+        "type": "STRUCT",
+        "specs": [
+          {
+            "identifier": "longitude",
+            "name": "经度",
+            "dataType": {
+              "type": "DECIMAL",
+              "specs": {
+                "min": -180,
+                "max": 180,
+                "step": 1e-8,
+                "unit": null,
+                "unitName": null
+              }
+            },
+            "required": true
+          },
+          {
+            "identifier": "latitude",
+            "name": "纬度",
+            "dataType": {
+              "type": "DECIMAL",
+              "specs": {
+                "min": -90,
+                "max": 90,
+                "step": 1e-8,
+                "unit": null,
+                "unitName": null
+              }
+            },
+            "required": true
+          },
+          {
+            "identifier": "coordinateSystem",
+            "name": "坐标系统",
+            "dataType": {
+              "type": "ENUM",
+              "specs": {
+                "1": "WGS_84",
+                "2": "GCJ_02"
+              }
+            },
+            "required": true
+          }
+        ]
+      },
+      "desc": null
+    }
+  ],
+  "services": [
+    {
+      "identifier": "scheduleSwitch",
+      "name": "设置定时开关",
+      "callType": "SYNC",
+      "inputData": [
+        {
+          "identifier": "lightId",
+          "name": "设备id",
+          "dataType": {
+            "type": "INT",
+            "specs": {
+              "min": -2147483648,
+              "max": 2147483647,
+              "step": 1,
+              "unit": null,
+              "unitName": null
+            }
+          }
+        },
+        {
+          "identifier": "configList",
+          "name": "定时列表",
+          "dataType": {
+            "type": "ARRAY",
+            "specs": {
+              "size": 100,
+              "item": {
+                "specs": [
+                  {
+                    "identifier": "switchTime",
+                    "name": "时间",
+                    "dataType": {
+                      "type": "DATE",
+                      "specs": {}
+                    },
+                    "required": true
+                  },
+                  {
+                    "identifier": "switch",
+                    "name": "开关",
+                    "dataType": {
+                      "type": "BOOL",
+                      "specs": {
+                        "false": "关",
+                        "true": "开"
+                      }
+                    },
+                    "required": true
+                  }
+                ],
+                "type": "STRUCT"
+              }
+            }
+          }
+        }
+      ],
+      "outputData": [
+        {
+          "identifier": "configResult",
+          "name": "设置结果",
+          "dataType": {
+            "type": "BOOL",
+            "specs": {
+              "false": "设置失败",
+              "true": "设置成功"
+            }
+          }
+        }
+      ],
+      "desc": null
+    },
+    {
+      "identifier": "getScheduleList",
+      "name": "查询定时开关列表",
+      "callType": "SYNC",
+      "inputData": [
+        {
+          "identifier": "lightId",
+          "name": "设备id",
+          "dataType": {
+            "type": "INT",
+            "specs": {
+              "min": -2147483648,
+              "max": 2147483647,
+              "step": 1,
+              "unit": null,
+              "unitName": null
+            }
+          }
+        }
+      ],
+      "outputData": [
+        {
+          "identifier": "configList",
+          "name": "定时列表",
+          "dataType": {
+            "type": "ARRAY",
+            "specs": {
+              "size": 100,
+              "item": {
+                "specs": [
+                  {
+                    "identifier": "switchTime",
+                    "name": "时间",
+                    "dataType": {
+                      "type": "DATE",
+                      "specs": {}
+                    },
+                    "required": true
+                  },
+                  {
+                    "identifier": "switch",
+                    "name": "开关",
+                    "dataType": {
+                      "type": "BOOL",
+                      "specs": {
+                        "false": "关",
+                        "true": "开"
+                      }
+                    },
+                    "required": true
+                  }
+                ],
+                "type": "STRUCT"
+              }
+            }
+          }
+        }
+      ],
+      "desc": null
+    },
+    {
+      "identifier": "simpleService",
+      "name": "测试所有简单数据类型",
+      "callType": "SYNC",
+      "inputData": [
+        {
+          "identifier": "lightId",
+          "name": "设备id",
+          "dataType": {
+            "type": "INT",
+            "specs": {
+              "min": -2147483648,
+              "max": 2147483647,
+              "step": 1,
+              "unit": null,
+              "unitName": null
+            }
+          }
+        },
+        {
+          "identifier": "decimalInput",
+          "name": "浮点型参数",
+          "dataType": {
+            "type": "DECIMAL",
+            "specs": {
+              "min": 0,
+              "max": 10000,
+              "step": 0.01,
+              "unit": "s",
+              "unitName": "秒"
+            }
+          }
+        },
+        {
+          "identifier": "enumInput",
+          "name": "枚举型参数",
+          "dataType": {
+            "type": "ENUM",
+            "specs": {
+              "1": "v1",
+              "2": "v2"
+            }
+          }
+        },
+        {
+          "identifier": "boolInput",
+          "name": "布尔型参数",
+          "dataType": {
+            "type": "BOOL",
+            "specs": {
+              "false": "F",
+              "true": "T"
+            }
+          }
+        },
+        {
+          "identifier": "textInput",
+          "name": "文本型参数",
+          "dataType": {
+            "type": "TEXT",
+            "specs": {
+              "length": 33
+            }
+          }
+        },
+        {
+          "identifier": "dateInput",
+          "name": "时间型参数",
+          "dataType": {
+            "type": "DATE",
+            "specs": {}
+          }
+        }
+      ],
+      "outputData": [
+        {
+          "identifier": "lightId",
+          "name": "设备id",
+          "dataType": {
+            "type": "INT",
+            "specs": {
+              "min": -2147483648,
+              "max": 2147483647,
+              "step": 1,
+              "unit": null,
+              "unitName": null
+            }
+          }
+        },
+        {
+          "identifier": "decimalInput",
+          "name": "浮点型参数",
+          "dataType": {
+            "type": "DECIMAL",
+            "specs": {
+              "min": 0,
+              "max": 10000,
+              "step": 0.01,
+              "unit": "s",
+              "unitName": "秒"
+            }
+          }
+        },
+        {
+          "identifier": "enumInput",
+          "name": "枚举型参数",
+          "dataType": {
+            "type": "ENUM",
+            "specs": {
+              "1": "v1",
+              "2": "v2"
+            }
+          }
+        },
+        {
+          "identifier": "boolInput",
+          "name": "布尔型参数",
+          "dataType": {
+            "type": "BOOL",
+            "specs": {
+              "false": "F",
+              "true": "T"
+            }
+          }
+        },
+        {
+          "identifier": "textInput",
+          "name": "文本型参数",
+          "dataType": {
+            "type": "TEXT",
+            "specs": {
+              "length": 33
+            }
+          }
+        },
+        {
+          "identifier": "dateInput",
+          "name": "时间型参数",
+          "dataType": {
+            "type": "DATE",
+            "specs": {}
+          }
+        }
+      ],
+      "desc": null
+    }
+  ],
+  "events": [
+    {
+      "identifier": "lowBatteryAlert",
+      "name": "电池电量不足告警",
+      "type": "ALERT",
+      "outputData": [
+        {
+          "identifier": "lightId",
+          "name": "设备id",
+          "dataType": {
+            "type": "INT",
+            "specs": {
+              "min": -2147483648,
+              "max": 2147483647,
+              "step": 1,
+              "unit": null,
+              "unitName": null
+            }
+          }
+        },
+        {
+          "identifier": "batteryPercent",
+          "name": "电量",
+          "dataType": {
+            "type": "INT",
+            "specs": {
+              "min": 0,
+              "max": 100,
+              "step": 1,
+              "unit": "%",
+              "unitName": "百分比"
+            }
+          }
+        }
+      ],
+      "desc": null
+    }
+  ]
+}

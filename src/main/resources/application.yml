@@ -1,0 +1,23 @@
+server:
+  port: 8080
+  tomcat:
+    threads:
+      min-spare: 1
+      max: 100
+
+spring:
+  application:
+    name: Canary3rdDriver
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/chenye-iot-canary?allowPublicKeyRetrieval=true&characterEncoding=UTF8&useSSL=false&serverTimezone=GMT%2B8
+    username: root
+    password: chenye
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    timeout: PT5S
+
+swagger-packages: com.chenye.iot.canary
+
+
