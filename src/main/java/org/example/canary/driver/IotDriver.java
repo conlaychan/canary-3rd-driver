@@ -16,7 +16,6 @@ public abstract class IotDriver {
 
     private DriverDataPoster driverDataPoster;
     private Long instanceId;
-    private String instanceName;
 
     /**
      * 关于驱动的使用说明
@@ -65,13 +64,6 @@ public abstract class IotDriver {
         return driverDataPoster;
     }
 
-    public String getInstanceName() {
-        if (instanceName == null) {
-            throw new IllegalStateException("驱动实例从未启动过");
-        }
-        return instanceName;
-    }
-
     /**
      * 初始化驱动实例，建立通信连接，以确保后续的属性读写、服务调用、事件监听等工作可以正常进行。
      *
@@ -83,10 +75,9 @@ public abstract class IotDriver {
      */
     protected abstract void start(String initParam, int cycleSeconds, Map<String, Set<String>> bindRules);
 
-    public final void start(DriverDataPoster driverDataPoster, Long instanceId, String instanceName, String initParam, int cycleSeconds, Map<String, Set<String>> bindRules) {
+    public final void start(DriverDataPoster driverDataPoster, Long instanceId, String initParam, int cycleSeconds, Map<String, Set<String>> bindRules) {
         this.driverDataPoster = Objects.requireNonNull(driverDataPoster);
         this.instanceId = Objects.requireNonNull(instanceId);
-        this.instanceName = Objects.requireNonNull(instanceName);
         this.start(initParam == null || initParam.isEmpty() ? "{}" : initParam, cycleSeconds, bindRules);
     }
 

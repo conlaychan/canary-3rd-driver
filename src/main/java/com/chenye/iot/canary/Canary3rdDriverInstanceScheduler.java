@@ -6,10 +6,7 @@ import com.chenye.iot.canary.dao.DeviceAbility;
 import com.chenye.iot.canary.dao.DeviceAbilityMapper;
 import com.chenye.iot.canary.dao.DriverInstance;
 import com.chenye.iot.canary.dao.DriverInstanceMapper;
-import com.chenye.iot.canary.model.DataSpecs;
-import com.chenye.iot.canary.model.IOData;
-import com.chenye.iot.canary.model.ThingModelJsonMapper;
-import com.chenye.iot.canary.model.ThingModelService;
+import com.chenye.iot.canary.model.*;
 import com.chenye.iot.canary.utils.ClassScanner;
 import com.chenye.iot.canary.utils.DriverDataPoster;
 import com.chenye.iot.canary.utils.RedisChannel;
@@ -38,7 +35,7 @@ public class Canary3rdDriverInstanceScheduler implements MessageListener {
     private final StringRedisTemplate stringRedisTemplate;
     private final DriverInstanceMapper driverInstanceMapper;
     private final DeviceAbilityMapper deviceAbilityMapper;
-    private final ConcurrentHashMap<Long, IotDriver> instanceMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, DriverInstanceWrapper> instanceMap = new ConcurrentHashMap<>();
 
     @PostConstruct
     protected void init() {
@@ -100,14 +97,14 @@ public class Canary3rdDriverInstanceScheduler implements MessageListener {
         Class<?> clazz = Class.forName(driverInstance.getDriverName());
         IotDriver instance = (IotDriver) clazz.getDeclaredConstructor().newInstance();
         String instanceName = driverInstance.getDriverInstanceName();
-        this.instanceMap.put(id, instance);
-        instance.start(driverDataPoster, id, instanceName, driverInstance.getInitParam(), driverInstance.getCycleSeconds(), bindRules);
+        this.instanceMap.put(id, new DriverInstanceWrapper(instance, instance.thingModel(), instanceName));
+        instance.start(driverDataPoster, id, driverInstance.getInitParam(), driverInstance.getCycleSeconds(), bindRules);
     }
 
     public void stop(Long instanceId) {
-        IotDriver instance = this.instanceMap.get(instanceId);
-        if (instance != null) {
-            instance.stop();
+        DriverInstanceWrapper wrapper = this.instanceMap.get(instanceId);
+        if (wrapper != null) {
+            wrapper.instance.stop();
             this.instanceMap.remove(instanceId);
         }
     }
@@ -135,14 +132,51 @@ public class Canary3rdDriverInstanceScheduler implements MessageListener {
             return;
         }
         Long id = data.driverInstanceId;
-        IotDriver instance = this.instanceMap.get(id);
-        if (instance == null) {
+        DriverInstanceWrapper wrapper = this.instanceMap.get(id);
+        if (wrapper == null) {
             log.error("驱动实例id：{}，没有启动", id);
             return;
         }
         for (JsonPropertyValueWrapper propertyValueWrapper : data.jsonPropertyValueWrappers) {
-            instance.writeProperty(propertyValueWrapper.propertyIdentifier, propertyValueWrapper.bindRule, propertyValueWrapper.value);
+            if (checkPropertyValue(wrapper.thingModel, wrapper.name, propertyValueWrapper.propertyIdentifier, propertyValueWrapper.value)) {
+                wrapper.instance.writeProperty(propertyValueWrapper.propertyIdentifier, propertyValueWrapper.bindRule, propertyValueWrapper.value);
+            }
         }
+    }
+
+    /**
+     * 检查即将写入的属性值是否符合物模型中的数据定义
+     */
+    private boolean checkPropertyValue(ThingModel thingModel, String instanceName, String propertyId, String value) {
+        ThingModelProperty property = thingModel.getProperties().stream().filter(it -> it.getIdentifier().equals(propertyId)).findFirst().orElse(null);
+        if (property == null) {
+            log.error("驱动实例：{}，物模型中没有属性id：{}", instanceName, propertyId);
+            return false;
+        }
+        if (!property.getAccessMode().getWriteable()) {
+            log.error("属性不支持写入，instanceName：{}， propertyIdentifier：{}", instanceName, propertyId);
+            return false;
+        }
+        boolean validate;
+        try {
+            @SuppressWarnings("unchecked")
+            DataSpecs<Serializable> specs = (DataSpecs<Serializable>) property.getDataType().getSpecs();
+            validate = specs.validateValue(specs.parseValue(value));
+        } catch (Throwable e) {
+            log.error(
+                    "属性值不符合数据定义，instanceName：{}, propertyIdentifier：{}，value：{}",
+                    instanceName, propertyId, value, e
+            );
+            return false;
+        }
+        if (!validate) {
+            log.error(
+                    "属性值不符合数据定义，instanceName：{}, propertyIdentifier：{}，value：{}",
+                    instanceName, propertyId, value
+            );
+            return false;
+        }
+        return true;
     }
 
     private void executeService(String message) {
@@ -154,18 +188,18 @@ public class Canary3rdDriverInstanceScheduler implements MessageListener {
             return;
         }
         Long driverInstanceId = data.getDriverInstanceId();
-        IotDriver instance = this.instanceMap.get(driverInstanceId);
-        if (instance == null) {
+        DriverInstanceWrapper wrapper = this.instanceMap.get(driverInstanceId);
+        if (wrapper == null) {
             log.error("驱动实例id：{}，没有启动", driverInstanceId);
             return;
         }
-        boolean check = this.checkServiceInputData(instance, data.serviceIdentifier, data.inputData);
+        boolean check = this.checkServiceInputData(wrapper.thingModel, wrapper.name, data.serviceIdentifier, data.inputData);
         if (!check) {
             return;
         }
         Map<String, String> outputData;
         try {
-            outputData = instance.executeService(data.serviceIdentifier, data.inputData);
+            outputData = wrapper.instance.executeService(data.serviceIdentifier, data.inputData);
         } catch (Throwable e) {
             log.error(
                     "执行驱动服务时捕获到异常，driverInstanceId：{}，serviceIdentifier：{}，inputData：{}",
@@ -184,10 +218,9 @@ public class Canary3rdDriverInstanceScheduler implements MessageListener {
      * 检查服务的入参是否符合物模型中的数据定义
      */
     private boolean checkServiceInputData(
-            IotDriver instance, String serviceIdentifier, Map<String, String> inputData
+            ThingModel thingModel, String name, String serviceIdentifier, Map<String, String> inputData
     ) {
-        String name = instance.getInstanceName();
-        ThingModelService service = instance.thingModel().getServices().stream().filter(it -> it.getIdentifier().equals(serviceIdentifier)).findFirst().orElse(null);
+        ThingModelService service = thingModel.getServices().stream().filter(it -> it.getIdentifier().equals(serviceIdentifier)).findFirst().orElse(null);
         if (service == null) {
             log.error("驱动实例：{}，物模型中没有服务id：{}", name, serviceIdentifier);
             return false;
@@ -230,13 +263,20 @@ public class Canary3rdDriverInstanceScheduler implements MessageListener {
 
     public List<Map<String, Object>> list() {
         List<Map<String, Object>> list = new ArrayList<>();
-        this.instanceMap.forEach((id, instance) -> {
+        this.instanceMap.forEach((id, wrapper) -> {
             Map<String, Object> obj = new LinkedHashMap<>();
             obj.put("id", id);
-            obj.put("name", instance.getInstanceName());
+            obj.put("name", wrapper.name);
             list.add(obj);
         });
         return list;
+    }
+
+    @Data
+    private static class DriverInstanceWrapper {
+        private final IotDriver instance;
+        private final ThingModel thingModel;
+        private final String name;
     }
 
     @Data
