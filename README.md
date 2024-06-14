@@ -1,5 +1,7 @@
 第三方独立驱动，通过 redis 的 pub/sub 功能与平台通信。
 
+此工程经过了这些jdk版本的测试：1.8、17、21。
+
 # 驱动实例上报属性（点位）实时值到平台
 
 平台订阅 redis 频道：up/device/property_value，数据结构示例：
@@ -113,8 +115,7 @@
 {
   "driverInstanceId": 123,
   "serviceIdentifier": "testService",
-  "serialNumber": 111,
-  // 本次命令的唯一序号，仅执行同步服务时才有值，执行异步服务时没有值
+  "serialNumber": 111, // 本次命令的唯一序号，仅执行同步服务时才有值，执行异步服务时没有值
   "inputData": {
     "decimalInput": "5.555",
     "enumInput": "1",
@@ -135,12 +136,9 @@
 ```json
 {
   "driverInstanceId": 123,
-  "abilityIdentifier": "testService",
-  // 等于下发命令时的serviceIdentifier
-  "readAt": "2023-01-12T11:22:33",
-  // 执行完服务的时间
-  "serialNumber": 111,
-  // 等于下发命令时的serialNumber
+  "abilityIdentifier": "testService", // 等于下发命令时的serviceIdentifier
+  "readAt": "2023-01-12T11:22:33", // 执行完服务的时间
+  "serialNumber": 111, // 等于下发命令时的serialNumber
   "outputData": {
     "decimalOutput": "5.555",
     "enumOutput": "1",
@@ -161,10 +159,8 @@
 ```json
 {
   "driverInstanceId": 123,
-  "abilityIdentifier": "lowBatteryAlert",
-  // 事件编号（类型）
-  "readAt": "2023-01-12T11:22:33",
-  // 事件时间
+  "abilityIdentifier": "lowBatteryAlert", // 事件编号（类型）
+  "readAt": "2023-01-12T11:22:33", // 事件时间
   "outputData": {
     "decimalOutput": "5.555",
     "enumOutput": "1",
