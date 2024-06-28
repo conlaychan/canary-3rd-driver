@@ -96,9 +96,9 @@ public class Canary3rdDriverInstanceScheduler implements MessageListener {
         }
         Class<?> clazz = Class.forName(driverInstance.getDriverName());
         IotDriver instance = (IotDriver) clazz.getDeclaredConstructor().newInstance();
+        instance.start(driverDataPoster, id, driverInstance.getInitParam(), driverInstance.getCycleSeconds(), bindRules);
         String instanceName = driverInstance.getDriverInstanceName();
         this.instanceMap.put(id, new DriverInstanceWrapper(instance, instance.thingModel(), instanceName));
-        instance.start(driverDataPoster, id, driverInstance.getInitParam(), driverInstance.getCycleSeconds(), bindRules);
     }
 
     public void stop(Long instanceId) {
